@@ -1,0 +1,26 @@
+id: normal-small-1
+name: normal_small_flow
+description: 正常に受付から完了まで進む小規模ケース
+expected_label: PASS
+kind: normal
+size: small
+start_at: 2026-02-12T10:00:00
+
+events:
+  - after_seconds: 0
+    level: INFO
+    order: normal-1
+    status: 受付済み
+    message: 受付完了
+
+  - after_seconds: 5
+    level: INFO
+    order: normal-1
+    status: 仕掛中
+    message: 調理開始
+
+  - after_seconds: 15
+    level: INFO
+    order: normal-1
+    status: 完了
+    message: 調理完了・呼び出し
