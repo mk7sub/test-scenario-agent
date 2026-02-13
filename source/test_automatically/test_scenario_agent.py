@@ -4,6 +4,7 @@ import argparse
 import json
 import os
 import re
+import shutil
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -11,7 +12,47 @@ from typing import Any, Dict, List, Optional
 
 import yaml
 
+from config_loader import get_value
+
 TIMESTAMP_FMT = "%Y-%m-%d %H:%M:%S"
+CONFIG_SECTION = "test_scenario_agent"
+BASE_DIR = Path(__file__).resolve().parent
+
+
+def cfg(key: str, fallback: Any) -> Any:
+    return get_value(CONFIG_SECTION, key, fallback)
+
+
+def queue_reset_config() -> Dict[str, Any]:
+    raw = get_value(CONFIG_SECTION, "queue_reset", {})
+    return raw if isinstance(raw, dict) else {}
+
+
+def resolve_relative_path(raw: str) -> Path:
+    path = Path(raw)
+    if not path.is_absolute():
+        path = (BASE_DIR / raw).resolve()
+    return path
+
+
+def maybe_reset_queue() -> None:
+    settings = queue_reset_config()
+    queue_path_raw = settings.get("queue_path")
+    template_path_raw = settings.get("template")
+    if not queue_path_raw or not template_path_raw:
+        print("[AGENT] queue_reset の queue_path または template が設定されていません", flush=True)
+        return
+
+    queue_path = resolve_relative_path(str(queue_path_raw))
+    template_path = resolve_relative_path(str(template_path_raw))
+
+    if not template_path.exists():
+        print(f"[AGENT] queue_reset テンプレートが見つかりません: {template_path}", flush=True)
+        return
+
+    queue_path.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(template_path, queue_path)
+    print(f"[AGENT] queue.json を初期化しました: {queue_path}", flush=True)
 
 
 def slugify(text: str) -> str:
@@ -132,6 +173,9 @@ def run(args: argparse.Namespace) -> None:
     jsonl_path = Path(args.output_jsonl)
     log_dir = Path(args.log_dir)
 
+    if getattr(args, "reset_queue", False):
+        maybe_reset_queue()
+
     if jsonl_path.exists() and not args.append:
         jsonl_path.unlink()
 
@@ -189,32 +233,64 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="YAML駆動のテストシナリオ実行エージェント")
     parser.add_argument(
         "--scenario",
-        default=os.path.join("./scenario", "normal_flow.yaml"),
+        default=cfg("scenario", os.path.join("./scenario", "normal_flow.yaml")),
         help="実行するシナリオYAMLのパス",
     )
     parser.add_argument(
         "--output-jsonl",
-        default=os.path.join("./log", "agent_runs.jsonl"),
+        default=cfg("output_jsonl", os.path.join("./log", "agent_runs.jsonl")),
         help="実行結果を記録するJSONLファイル",
     )
     parser.add_argument(
         "--log-dir",
-        default=os.path.join("./log", "agent_cases"),
+        default=cfg("log_dir", os.path.join("./log", "agent_cases")),
         help="生成ログを保存するディレクトリ",
     )
     parser.add_argument(
         "--base-start",
+        default=cfg("base_start", None),
         help="after_seconds計算の基準となるISO8601日時。未指定時はシナリオstart_atまたは現在時刻",
     )
+    queue_cfg = queue_reset_config()
+
     parser.add_argument(
         "--dry-run",
+        dest="dry_run",
         action="store_true",
+        default=bool(cfg("dry_run", False)),
         help="時間待ちをスキップして即時実行する",
     )
     parser.add_argument(
+        "--no-dry-run",
+        dest="dry_run",
+        action="store_false",
+        help="設定ファイルでdry_runが有効な場合に無効化する",
+    )
+    parser.add_argument(
         "--append",
+        dest="append",
         action="store_true",
+        default=bool(cfg("append", False)),
         help="既存のJSONLを残したまま追記する",
+    )
+    parser.add_argument(
+        "--no-append",
+        dest="append",
+        action="store_false",
+        help="設定ファイルでappendが有効な場合に再作成に切り替える",
+    )
+    parser.add_argument(
+        "--reset-queue",
+        dest="reset_queue",
+        action="store_true",
+        default=bool(queue_cfg.get("enabled", False)),
+        help="シナリオ実行前に queue.json をテンプレートで初期化する",
+    )
+    parser.add_argument(
+        "--no-reset-queue",
+        dest="reset_queue",
+        action="store_false",
+        help="設定ファイルの queue_reset 指定を無効化する",
     )
     return parser
 

@@ -1,0 +1,25 @@
+id: tc004
+name: tc004_status_reverse
+description: 完了後に仕掛中へ戻る逆行遷移
+description_detail: 完了後に誤って仕掛中へ戻したパターン
+expected_label: FAIL
+kind: anomaly
+size: small
+start_at: 2026-02-13T10:30:00
+
+events:
+  - after_seconds: 0
+    cmd: python reception_queue_system/control_queue.py register
+    message: 受付完了 (001)
+
+  - after_seconds: 5
+    cmd: python reception_queue_system/control_queue.py start 001
+    message: 001番の調理開始
+
+  - after_seconds: 15
+    cmd: python reception_queue_system/control_queue.py finish 001
+    message: 001番の調理完了・呼出
+
+  - after_seconds: 25
+    cmd: python reception_queue_system/control_queue.py start 001
+    message: 完了済みを誤って仕掛中に戻す

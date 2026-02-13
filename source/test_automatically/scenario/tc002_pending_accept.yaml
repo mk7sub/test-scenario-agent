@@ -1,0 +1,12 @@
+id: tc002
+name: tc002_pending_accept
+description: 受付のみで完了しないケースが許容されることを確認
+expected_label: PASS
+kind: acceptance
+size: small
+start_at: 2026-02-13T10:10:00
+
+events:
+  - after_seconds: 0
+    cmd: python reception_queue_system/control_queue.py register
+    message: 受付だけ行い、そのまま待機

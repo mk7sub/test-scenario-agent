@@ -1,0 +1,17 @@
+テストケースID,テスト項目名,前提条件,確認手順,期待結果,判定,実施日,実施者,備考
+TC-001,正常順次フロー,"queue.json は空、display_board.py 起動済み","1) control_queue register --order-id N001 を実行
+2) control_queue start N001 を実行
+3) control_queue finish N001 を実行
+4) control_queue handoff --order-id N001 を実行","display_board 左列に N001 が受付順で表示され続け、仕掛中後も左列に残る。完了後は右列に移り、handoff 実行で両列から消え queue.json から削除される。ログにエラーは出ない。",,,,"仕様の基本フロー (受付→仕掛中→完了→お渡し) を検証"
+TC-002,未完了受付許容,"なし","1) control_queue register --order-id N002 を実行
+2) 何も操作せず観測","N002 が左列に「受付済み」として表示され続け、未完了でも異常とならない。ログにエラーは出ない。",,,,"途中で終わる遷移が許容されることを確認"
+TC-003,ステータス飛び越え検知,"なし","1) control_queue register --order-id N003 を実行
+2) queue.json を手動編集し N003 の status を ""完了"" に変更 (updated_at を空)
+3) display_board で表示を確認し、ログ解析を実施","ログまたは解析結果で「仕掛中」を経由していない不正遷移として FAIL 判定される。",,,,"仕様上 ステータスの飛び越えは不正"
+TC-004,ステータス逆行検知,"N001 が完了済","1) control_queue register --order-id N004 を実行
+2) start, finish で完了まで到達
+3) queue.json を手動で ""仕掛中"" に戻す
+4) display_board とログを確認","不正な逆行遷移として FAIL 判定 (または検知ログ) が必要。",,,,"仕様上 逆行は禁止"
+TC-005,エラーログ存在時FAIL,"任意の正常シナリオ","1) 正常フローを実施し PASS 条件を満たす
+2) app.log に ERROR レベルを強制出力 (例: echo ""ERROR ..."" >> log/app.log)
+3) analyze_agent_logs.py を実行","ERROR を含むログのため PASS 判定をしてはならず FAIL になる。",,,,"仕様で「ログにエラーがあれば PASS 禁止」と定義"

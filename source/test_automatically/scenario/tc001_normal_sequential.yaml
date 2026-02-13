@@ -1,0 +1,20 @@
+id: tc001
+name: tc001_normal_sequential
+description: 正常に受付から完了まで遷移するシナリオ
+expected_label: PASS
+kind: acceptance
+size: small
+start_at: 2026-02-13T10:00:00
+
+events:
+  - after_seconds: 0
+    cmd: python reception_queue_system/control_queue.py register
+    message: 受付完了 (自動採番で001を割り当て)
+
+  - after_seconds: 5
+    cmd: python reception_queue_system/control_queue.py start 001
+    message: 001番の調理を開始
+
+  - after_seconds: 15
+    cmd: python reception_queue_system/control_queue.py finish 001
+    message: 001番の調理完了・呼出

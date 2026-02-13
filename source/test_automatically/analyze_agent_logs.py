@@ -8,8 +8,14 @@ from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
+from config_loader import get_value
 from ollama_http import DEFAULT_BASE_URL, generate as ollama_generate_http
 from prompts import build_analysis_prompt
+CONFIG_SECTION = "analyze_agent_logs"
+
+
+def cfg(key: str, fallback: Any) -> Any:
+    return get_value(CONFIG_SECTION, key, fallback)
 
 
 def parse_label(response_text: str) -> str:
@@ -153,13 +159,37 @@ def run(args: argparse.Namespace) -> None:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Analyze agent-generated logs with Ollama")
-    parser.add_argument("--agent-jsonl", default=os.path.join("./log", "agent_runs.jsonl"))
-    parser.add_argument("--output-csv", default=os.path.join("./log", "agent_analysis_results.csv"))
-    parser.add_argument("--model", default="phi4-mini-latest-16384")
-    parser.add_argument("--base-url", default=DEFAULT_BASE_URL)
-    parser.add_argument("--temperature", type=float, default=0.0)
-    parser.add_argument("--num-ctx", type=int, default=16384)
-    parser.add_argument("--limit", type=int)
+    parser.add_argument(
+        "--agent-jsonl",
+        default=cfg("agent_jsonl", os.path.join("./log", "agent_runs.jsonl")),
+    )
+    parser.add_argument(
+        "--output-csv",
+        default=cfg("output_csv", os.path.join("./log", "agent_analysis_results.csv")),
+    )
+    parser.add_argument(
+        "--model",
+        default=cfg("model", "phi4-mini-latest-16384"),
+    )
+    parser.add_argument(
+        "--base-url",
+        default=cfg("base_url", DEFAULT_BASE_URL),
+    )
+    parser.add_argument(
+        "--temperature",
+        type=float,
+        default=float(cfg("temperature", 0.0)),
+    )
+    parser.add_argument(
+        "--num-ctx",
+        type=int,
+        default=int(cfg("num_ctx", 16384)),
+    )
+    parser.add_argument(
+        "--limit",
+        type=int,
+        default=cfg("limit", None),
+    )
     return parser
 
 

@@ -1,0 +1,16 @@
+id: tc003
+name: tc003_status_skip
+description: 仕掛中を経由せず完了に飛び越える不正遷移
+expected_label: FAIL
+kind: anomaly
+size: small
+start_at: 2026-02-13T10:20:00
+
+events:
+  - after_seconds: 0
+    cmd: python reception_queue_system/control_queue.py register
+    message: 受付完了 (001)
+
+  - after_seconds: 3
+    cmd: python reception_queue_system/control_queue.py finish 001
+    message: 仕掛中を経由せず完了に設定
