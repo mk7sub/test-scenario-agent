@@ -4,13 +4,16 @@ description: 仕掛中を経由せず完了に飛び越える不正遷移
 expected_label: FAIL
 kind: anomaly
 size: small
-start_at: 2026-02-13T10:20:00
 
 events:
   - after_seconds: 0
-    cmd: python reception_queue_system/control_queue.py register
-    message: 受付完了 (001)
+    cmd: python reception_queue_system/control_queue.py register --order-id N003
+    message: N003 を受付済みで追加
 
-  - after_seconds: 3
-    cmd: python reception_queue_system/control_queue.py finish 001
-    message: 仕掛中を経由せず完了に設定
+  - after_seconds: 15
+    cmd: >-
+      python -c "import json; from pathlib import Path; path = Path('reception_queue_system/queue.json');
+      data = json.loads(path.read_text(encoding='utf-8')); target = next((order for order in data.get('orders', []) if order.get('id') == 'N003'), None);
+      if target is None: raise SystemExit('N003 not found'); target['status'] = '完了'; target['updated_at'] = '';
+      target['completed_at'] = ''; path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')"
+    message: queue.json を直接書き換えて N003 を仕掛中を経由せず完了に変更

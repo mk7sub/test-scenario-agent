@@ -77,12 +77,12 @@ def run(args: argparse.Namespace) -> None:
     for record in records:
         status = record.get("status", "ok")
         case_id = record.get("case_id")
-        name = record.get("name")
+        name = record.get("name") or record.get("scenario_name")
         log_text = record.get("generated_log")
         expected = (record.get("expected_label") or "").upper()
         agent_verdict = (record.get("agent_verdict") or "").upper()
 
-        if status != "ok" or not log_text:
+        if not log_text:
             results.append(
                 {
                     "CaseID": case_id,
@@ -129,7 +129,7 @@ def run(args: argparse.Namespace) -> None:
                     "AnalyzerReason": analysis["response_text"],
                     "EvalCount": analysis["eval_count"],
                     "EvalDurationNs": analysis["eval_duration"],
-                    "Status": "ok",
+                    "Status": status,
                 }
             )
         except Exception as exc:

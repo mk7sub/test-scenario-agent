@@ -42,4 +42,3 @@ def load_section(name: str) -> Dict[str, Any]:
 def get_value(section: str, key: str, fallback: Any) -> Any:
     value = load_section(section).get(key, fallback)
     return fallback if value is None else value
-```

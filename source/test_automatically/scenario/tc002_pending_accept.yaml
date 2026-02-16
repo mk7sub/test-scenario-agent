@@ -1,12 +1,15 @@
 id: tc002
 name: tc002_pending_accept
-description: 受付のみで完了しないケースが許容されることを確認
+description: 受付のみで完了しないケースとキャンセル操作を確認
 expected_label: PASS
 kind: acceptance
 size: small
-start_at: 2026-02-13T10:10:00
 
 events:
   - after_seconds: 0
-    cmd: python reception_queue_system/control_queue.py register
-    message: 受付だけ行い、そのまま待機
+    cmd: python reception_queue_system/control_queue.py register --order-id N002
+    message: N002 を受付済みで追加
+
+  - after_seconds: 15
+    cmd: python reception_queue_system/control_queue.py cancel N002
+    message: N002 をキャンセルして queue.json から削除

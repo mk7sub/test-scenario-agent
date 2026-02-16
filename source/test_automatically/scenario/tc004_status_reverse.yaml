@@ -5,21 +5,24 @@ description_detail: 完了後に誤って仕掛中へ戻したパターン
 expected_label: FAIL
 kind: anomaly
 size: small
-start_at: 2026-02-13T10:30:00
 
 events:
   - after_seconds: 0
-    cmd: python reception_queue_system/control_queue.py register
-    message: 受付完了 (001)
+    cmd: python reception_queue_system/control_queue.py register --order-id N004
+    message: N004 を受付済みで追加
 
-  - after_seconds: 5
-    cmd: python reception_queue_system/control_queue.py start 001
-    message: 001番の調理開始
+  - after_seconds: 10
+    cmd: python reception_queue_system/control_queue.py start N004
+    message: N004 の調理開始
 
-  - after_seconds: 15
-    cmd: python reception_queue_system/control_queue.py finish 001
-    message: 001番の調理完了・呼出
+  - after_seconds: 20
+    cmd: python reception_queue_system/control_queue.py finish N004
+    message: N004 の調理完了・呼出
 
-  - after_seconds: 25
-    cmd: python reception_queue_system/control_queue.py start 001
-    message: 完了済みを誤って仕掛中に戻す
+  - after_seconds: 30
+    cmd: >-
+      python -c "import json; from pathlib import Path; path = Path('reception_queue_system/queue.json');
+      data = json.loads(path.read_text(encoding='utf-8')); target = next((order for order in data.get('orders', []) if order.get('id') == 'N004'), None);
+      if target is None: raise SystemExit('N004 not found'); target['status'] = '仕掛中'; target['updated_at'] = '';
+      target.pop('completed_at', None); path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')"
+    message: 完了済みの N004 を queue.json で直接 仕掛中 に巻き戻す

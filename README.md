@@ -31,6 +31,7 @@
 - `source/test_automatically/`
 	- これまで作成した Python スクリプト（データセット生成、シナリオ実行、LLM 解析、Ollama ラッパーなど）を集約。
 	- `config/settings.yaml`: 自動テスト系スクリプトの初期値をまとめる設定ファイル。
+	- `results/`: シナリオ実行後のログ解析結果 (`*.csv`) を格納。
 
 ## 前提条件
 - Python 3.10 以上
@@ -118,6 +119,8 @@ python test_automatically/test_scenario_agent.py \
 - `--dry-run`: 時間待ちをスキップし、すべて即時に実行
 - `--append`: 既存 JSONL に追記（指定しない場合は再作成）
 
+実行が完了すると、同一プロセス内で `analyze_agent_logs.py` を呼び出し、`source/test_automatically/results/` 配下に `<シナリオ名>_analysis.csv` を生成します（既存設定に従ったモデル・温度などで解析）。
+
 ### スクリプト初期状態の設定ファイル
 `source/test_automatically/config/settings.yaml` に以下のようなセクションを作っておくと、CLI 引数を省略した際の初期値として読み込まれます。CLI で明示した値が常に優先されます。
 
@@ -157,6 +160,9 @@ start_at: 2026-02-12T10:00:00
 
 events:
 	- after_seconds: 0
+		reset_queue: true
+		message: queue.json をテンプレートから初期化
+	- after_seconds: 0
 		cmd: python reception_queue_system/control_queue.py register
 		message: 受付完了 (001を採番)
 	- after_seconds: 5
@@ -170,6 +176,7 @@ events:
 - `after_seconds`: 基準時刻（`start_at` または `--base-start` 指定時刻）からの相対秒。
 - `at`: 絶対日時（ISO8601 形式）。`after_seconds` と同時に指定しないでください。
 - `cmd`: 実行するコマンド（相対パス可）。`python reception_queue_system/control_queue.py` のようにテスト対象 CLI を直接記載します。`queue_reset` で `count=0` に初期化されるため、`001` からの連番は `register` 実行時に自動採番でき、`--order-id` を省略できます。
+- `reset_queue`: `true` か `{ queue_path, template }` を指定すると、そのイベントで `queue.json` をテンプレートからコピーします。テンプレート／出力パスを省略した場合は `config/settings.yaml` の既定値を流用します。
 - `message`: 手順のメモ。
 - 実行結果は `log/agent_cases/<シナリオ名>.log` と `log/agent_runs.jsonl` に保存されます。
 

@@ -1,0 +1,1 @@
+for %%f in (..\test_automatically\scenario\tc00*.yaml) do python ..\test_automatically\test_scenario_agent.py --scenario "%%~ff" --no-append
