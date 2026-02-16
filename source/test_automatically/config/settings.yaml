@@ -1,0 +1,23 @@
+# 初期状態を定義する共通設定ファイル
+# スクリプトはセクション名単位で値を読み取り、CLI引数よりも低い優先度で適用されます。
+
+test_scenario_agent:
+  scenario: ./scenario/tc001_normal_sequential.yaml
+  output_jsonl: ./log/agent_runs.jsonl
+  log_dir: ./log/agent_cases
+  base_start:
+  dry_run: false
+  append: false
+  queue_reset:
+    enabled: false
+    queue_path: ../reception_queue_system/queue.json
+    template: ./config/queue_template.json
+
+analyze_agent_logs:
+  agent_jsonl: ./log/agent_runs.jsonl
+  output_csv: ./log/agent_analysis_results.csv
+  model: phi4-mini-latest-16384
+  base_url: http://localhost:11434
+  temperature: 0.0
+  num_ctx: 16384
+  limit:

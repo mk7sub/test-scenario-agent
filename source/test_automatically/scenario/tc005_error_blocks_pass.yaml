@@ -1,0 +1,23 @@
+id: tc005
+name: tc005_error_blocks_pass
+description: ログに ERROR が含まれると PASS 不可になることを検証
+expected_label: FAIL
+kind: anomaly
+size: small
+
+events:
+  - after_seconds: 0
+    cmd: python reception_queue_system/control_queue.py register --order-id N005
+  - after_seconds: 10
+    cmd: python reception_queue_system/control_queue.py start N005
+    message: N005 の調理開始
+
+  - after_seconds: 20
+    cmd: python reception_queue_system/control_queue.py finish N005
+    message: N005 の調理完了・呼出
+
+  - after_seconds: 30
+    cmd: >-
+      python -c "from pathlib import Path; p = Path('log/app.log'); p.parent.mkdir(parents=True, exist_ok=True);
+      fp = p.open('a', encoding='utf-8'); fp.write('ERROR 調理ラインでエラー発生\n'); fp.close()"
+    message: app.log に ERROR を強制出力して PASS 不可条件を再現

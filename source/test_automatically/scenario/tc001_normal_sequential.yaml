@@ -1,0 +1,27 @@
+id: tc001
+name: tc001_normal_sequential
+description: 正常に受付から完了まで遷移するシナリオ
+expected_label: PASS
+kind: acceptance
+size: small
+
+events:
+  - after_seconds: 0
+    reset_queue: true
+    message: queue.json をテンプレートから初期化
+
+  - after_seconds: 10
+    cmd: python reception_queue_system/control_queue.py register --order-id N001
+    message: N001 を受付済みで追加
+
+  - after_seconds: 20
+    cmd: python reception_queue_system/control_queue.py start N001
+    message: N001 番の調理を開始
+
+  - after_seconds: 30
+    cmd: python reception_queue_system/control_queue.py finish N001
+    message: N001 番の調理完了・呼出
+
+  - after_seconds: 40
+    cmd: python reception_queue_system/control_queue.py handoff --order-id N001
+    message: N001 番を呼出完了後にお渡ししてキューから削除
